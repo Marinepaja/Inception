@@ -4,7 +4,7 @@ FROM debian:bookworm
 # Install PHP and necessary extensions
 RUN apt update &&\
     apt upgrade -y &&\
-    apt install -y php7.4 \
+    apt install -y php\
                     php-fpm \
                     php-mysql \
                     mariadb-client \
@@ -14,7 +14,7 @@ RUN apt update &&\
 EXPOSE 9000
 
 # Copy the configuration file for php-fpm
-COPY conf/www.conf /etc/php/7.4/fpm/pool.d/
+COPY conf/www.conf /etc/php/fpm/pool.d/
 
 # Create the directory for the WordPress site
 RUN mkdir -p /var/www/mlaporte/wordpress
