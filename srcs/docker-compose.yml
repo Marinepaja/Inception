@@ -1,0 +1,65 @@
+# version: "3"  # Use Docker Compose version 3
+
+services:  # Definition of services
+
+  mariadb:  # Database service
+    container_name: mariadb  # Container name
+    image: mariadb  # Use the MariaDB image
+    build: ./requirements/mariadb  # Custom build of the image from the specified Dockerfile
+    env_file: .env  # Environment file for environment variables
+    networks:  # Connect to the "inception" network
+      - inception
+    expose:  # Expose port 3306
+      - "3306"
+    volumes:  # Mount a volume to store database data
+      - mariadb:/var/lib/mysql
+    restart: always  # Automatic restart of the container in case of failure
+
+  wordpress:  # WordPress service
+    container_name: wordpress  # Container name
+    image: wordpress  # Use the WordPress image
+    build: ./requirements/wordpress  # Custom build of the image from the specified Dockerfile
+    networks:  # Connect to the "inception" network
+      - inception
+    depends_on:  # Dependency of the service on the mariadb service to ensure correct startup order
+      - mariadb
+    expose:  # Expose port 9000
+      - "9000"
+    volumes:  # Mount a volume to store WordPress files
+      - wordpress:/var/www/mlaporte
+    env_file: .env  # Environment file for environment variables
+    restart: always  # Automatic restart of the container in case of failure
+
+  nginx:  # Nginx service
+    container_name: nginx  # Container name
+    image: nginx  # Use the Nginx image
+    build: ./requirements/nginx  # Custom build of the image from the specified Dockerfile
+    networks:  # Connect to the "inception" network
+      - inception
+    depends_on:  # Dependency of the service on the wordpress service to ensure correct startup order
+      - wordpress
+    ports:  # Mapping of port 443 of the container to port 443 of the host
+      - "443:443"
+    volumes:  # Mount a volume to share files with the WordPress service
+      - wordpress:/var/www/mlaporte
+    env_file: .env  # Environment file for environment variables
+    restart: always  # Automatic restart of the container in case of failure
+
+networks:  # Definition of the "inception" network
+  inception:
+    driver: bridge  # Use the bridge driver for the network
+    name: inception  # Name of the network
+
+volumes:  # Definition of volumes
+  wordpress:  # Volume to store WordPress files
+    driver: local  # Use the local driver for the volume
+    driver_opts:  # Driver-specific options
+      type: 'none'  # Volume type "none"
+      o: 'bind'  # Mount option "bind"
+      device: '/home/mlaporte/data/wordpress'  # Path to the directory for storing WordPress files
+  mariadb:  # Volume to store MariaDB database data
+    driver: local  # Use the local driver for the volume
+    driver_opts:  # Driver-specific options
+      type: 'none'  # Volume type "none"
+      o: 'bind'  # Mount option "bind"
+      device: '/home/mlaporte/data/mariadb'  # Path to the directory for storing MariaDB data
